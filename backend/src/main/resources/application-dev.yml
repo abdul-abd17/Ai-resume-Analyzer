@@ -1,0 +1,13 @@
+spring:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+  jpa:
+    show-sql: true
+
+app:
+  jwt:
+    secret: dev_default_secret_key_must_be_at_least_256_bits_long_for_security_compliance_12345

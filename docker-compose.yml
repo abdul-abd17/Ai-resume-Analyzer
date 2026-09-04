@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: resumatch-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-airesume_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - resumatch-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: resumatch-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - resumatch-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: resumatch-backend
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-airesume_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_ACTIVE_PROVIDER: ${AI_ACTIVE_PROVIDER:-gemini}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80,https://app.resumatch-ats.com}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - resumatch-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: resumatch-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - resumatch-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: resumatch-prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - resumatch-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: resumatch-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - resumatch-net
+
+networks:
+  resumatch-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploads_data:
