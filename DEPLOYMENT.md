@@ -45,8 +45,9 @@ This is the easiest cloud deployment path without managing virtual machines.
 2. Select your GitHub repository, choose **Root Directory** as `frontend`, and Build Command `npm run build`.
 3. Add Environment Variable:
    - `VITE_API_BASE_URL`: `https://airesume-backend.onrender.com/api`
-4. Click **Deploy**. Vercel generates a public HTTPS URL (e.g. `https://resumatch-ats.vercel.app`).
-5. Update `CORS_ALLOWED_ORIGINS` in Render backend service to match your live Vercel URL.
+4. Ensure `vercel.json` is present in `frontend/` (with rewrite rule `/((?!api/).*)` $\rightarrow$ `/index.html`) so browser refreshes on deep client-side routes (e.g., `/dashboard/match/1/101`) do not return HTTP 404.
+5. Click **Deploy**. Vercel generates a public HTTPS URL (e.g. `https://resumatch-ats.vercel.app`).
+6. Update `CORS_ALLOWED_ORIGINS` in Render backend service to match your live Vercel URL.
 
 ---
 
